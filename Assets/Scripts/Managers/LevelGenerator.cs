@@ -23,7 +23,8 @@ public class LevelGenerator : MonoBehaviour {
     private Room rooms;
     private GameObject boardHolder;
 
-    private int[][] pathFiding;
+    //Ajeitar isso por favoooor
+    public GameObject player;
 
     private void Start()
     {
@@ -35,7 +36,6 @@ public class LevelGenerator : MonoBehaviour {
 
         StartCoroutine("GenerateOtherRooms");
 
-        //InstantiateTiles();
     }
 
 
@@ -117,21 +117,19 @@ public class LevelGenerator : MonoBehaviour {
         AddDoor();
 
         InstantiateTiles();
+
+        SpawnPlayer();
     }
 
     //Checando se eu posso adicionar uma sala numa posição
     bool CheckForSpace(int x, int y)
     {
-        //Debug.Log("Checking: x = " + x.ToString() + " y = " + y.ToString());
         bool resposta = true;
 
         for (int i = 0; i < (rooms.highestX - rooms.lowestX + 1) && resposta; i++)
             for (int j = 0; j < (rooms.highestY - rooms.lowestY + 1) && resposta; j++)
                 if ((tiles[x + i][y + j] == TileType.Floor) && (secTiles[rooms.lowestX + i][rooms.lowestY + j] == TileType.Floor)  || CheckTile(x, y, i, j))
-                {
                     resposta = false;
-                    //Debug.Log("Sobreposição: x = " + x.ToString() + " y = " + y.ToString());
-                }
 
         if (resposta)
         {
@@ -187,54 +185,19 @@ public class LevelGenerator : MonoBehaviour {
             for (int j = 2; j < rows - 2; j ++)
                 if (tiles[i][j] == TileType.Floor)
                 {
-                    if (tiles[i + 1][j] == TileType.Wall && tiles[i + 2][j] == TileType.Floor)
+                    if (tiles[i + 1][j] == TileType.Wall && tiles[i + 2][j] == TileType.Floor && doors[i + 2][j] == 0)
                         if (Lib.PathFiding(i, j, i + 2, j, tiles) == 0 || Lib.PathFiding(i, j, i + 2, j, tiles) >= 20)
                             PunchDoor(i + 1, j);
-                    if (tiles[i][j + 1] == TileType.Wall && tiles[i][j + 2] == TileType.Floor)
+                    if (tiles[i][j + 1] == TileType.Wall && tiles[i][j + 2] == TileType.Floor && doors[i][j + 2] == 0)
                         if (Lib.PathFiding(i, j, i, j + 2, tiles) == 0 || Lib.PathFiding(i, j, i, j + 2, tiles) >= 20)
                             PunchDoor(i, j + 1);
-                    if (tiles[i - 1][j] == TileType.Wall && tiles[i - 2][j] == TileType.Floor)
-                        if (Lib.PathFiding(i, j, i -2, j, tiles) == 0 || Lib.PathFiding(i, j, i - 2, j, tiles) >= 20)
+                    if (tiles[i - 1][j] == TileType.Wall && tiles[i - 2][j] == TileType.Floor && doors[i - 2][j] == 0)
+                        if (Lib.PathFiding(i, j, i - 2, j, tiles) == 0 || Lib.PathFiding(i, j, i - 2, j, tiles) >= 20)
                             PunchDoor(i - 1, j);
-                    if (tiles[i][j - 1] == TileType.Wall && tiles[i][j - 2] == TileType.Floor)
+                    if (tiles[i][j - 1] == TileType.Wall && tiles[i][j - 2] == TileType.Floor && doors[i][j - 2] == 0)
                         if (Lib.PathFiding(i, j, i, j - 2, tiles) == 0 || Lib.PathFiding(i, j, i, j - 2, tiles) >= 20)
                             PunchDoor(i, j - 1);
                 }
-    }
-
-    void FindPath(int startX, int startY, int endX, int endY, int peso)
-    {
-        pathFiding[startX][startY] = peso;
-        if (tiles[startX + 1][startY] == TileType.Floor && pathFiding[startX + 1][startY] == 0)
-            FindPath(startX + 1, startY, endX, endY, peso + 1);
-        if (tiles[startX][startY + 1] == TileType.Floor && pathFiding[startX][startY + 1] == 0)
-            FindPath(startX, startY + 1, endX, endY, peso + 1);
-        if (tiles[startX - 1][startY] == TileType.Floor && pathFiding[startX - 1][startY] == 0)
-            FindPath(startX - 1, startY, endX, endY, peso + 1);
-        if (tiles[startX][startY - 1] == TileType.Floor && pathFiding[startX][startY - 1] == 0)
-            FindPath(startX, startY - 1, endX, endY, peso + 1);
-    }
-
-    bool CheckForDoor(int x, int y)
-    {
-        bool resposta = false;
-        if (doors[x][y] == 1)
-            return true;
-        else if (pathFiding[x][y] == 1)
-            return false;
-        else if (pathFiding[x][y] == 0)
-            return false;
-
-        if (pathFiding[x + 1][y] != 0 && pathFiding[x + 1][y] < pathFiding[x][y])
-            resposta = CheckForDoor(x + 1, y);
-        else if (pathFiding[x][y + 1] != 0 && pathFiding[x][y + 1] < pathFiding[x][y])
-            resposta = CheckForDoor(x, y + 1);
-        else if (pathFiding[x - 1][y] != 0 && pathFiding[x - 1][y] < pathFiding[x][y])
-            resposta = CheckForDoor(x - 1, y);
-        else if (pathFiding[x][y - 1] != 0 && pathFiding[x][y - 1] < pathFiding[x][y])
-            resposta = CheckForDoor(x, y - 1);
-
-        return resposta;
     }
 
     void PunchDoor(int x, int y)
@@ -267,7 +230,6 @@ public class LevelGenerator : MonoBehaviour {
         GameObject tileInstance = Instantiate(prefabs[randomIndex], position, Quaternion.identity) as GameObject;
         if (doors[xCoord][yCoord] == 1)
         {
-            position = new Vector3(xCoord, yCoord, -1f);
             GameObject doorInstance = Instantiate(doorPrefabs[randomDoorIndex], position, Quaternion.identity) as GameObject;
             doorInstance.transform.parent = boardHolder.transform;
         }
@@ -296,5 +258,32 @@ public class LevelGenerator : MonoBehaviour {
             for (int j = 0; j < rows; j++)
                 array[i][j] = 0;
         return array;
+    }
+
+    //Por favor arrumar isso
+    void SpawnPlayer()
+    {
+        int quantFloor = 0;
+        int random = 0;
+        int contador = 0;
+
+        for (int i = 0; i < columns; i++)
+            for (int j = 0; j < rows; j++)
+                if (tiles[i][j] == TileType.Floor && doors[i][j] != 1)
+                    quantFloor++;
+
+        random = Random.RandomRange(0, quantFloor);
+
+        for (int i = 0; i < columns; i++)
+            for (int j = 0; j < rows; j++)
+                if (tiles[i][j] == TileType.Floor && doors[i][j] != 1)
+                {
+                    if (contador == random)
+                    {
+                        Vector3 position = new Vector3 (i, j + 0.125f, 0f);
+                        GameObject playerInstance = Instantiate(player, position, Quaternion.identity) as GameObject;
+                    }
+                    contador++;
+                }
     }
 }
