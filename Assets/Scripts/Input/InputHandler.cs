@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class InputHandler: MonoBehaviour{
+public class InputHandler : MonoBehaviour
+{
 
     private KeyCode left = KeyCode.A;
     private KeyCode up = KeyCode.W;
@@ -15,13 +16,13 @@ public class InputHandler: MonoBehaviour{
 
     public ICommand<Player> HandleInput ()
     {
-        if (Input.GetKeyDown(right))
+        if (Input.GetKey(right))
             return right_;
-        if (Input.GetKeyDown(left))
+        if (Input.GetKey(left))
             return left_;
-        if (Input.GetKeyDown(up))
+        if (Input.GetKey(up))
             return up_;
-        if (Input.GetKeyDown(down))
+        if (Input.GetKey(down))
             return down_;
 
         return null;

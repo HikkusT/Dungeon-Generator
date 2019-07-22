@@ -20,7 +20,7 @@ public abstract class Moving : MonoBehaviour
         m_inverseMoveTime = 1f / moveTime;
     }
 
-    public void Move (int xDir, int yDir)
+    public virtual bool Move (int xDir, int yDir)
     {
         RaycastHit2D hit;
 
@@ -37,10 +37,12 @@ public abstract class Moving : MonoBehaviour
         if (hit.transform == null)
         {
             StartCoroutine(SmoothMovement(endPos));
+            return true;
         }
+        return false;
     }
 
-    protected IEnumerator SmoothMovement (Vector3 end)
+    protected virtual IEnumerator SmoothMovement (Vector3 end)
     {
         float sqrRemainingDistance = (transform.position - end).sqrMagnitude;
 

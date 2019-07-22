@@ -13,10 +13,24 @@ public class Player : Moving {
         base.Start();
     }
 
+    public override bool Move(int xDir, int yDir)
+    {
+        bool canMove = base.Move(xDir, yDir);
+
+        if (canMove)
+            GameManager.instance.playersTurn = false;
+
+        return canMove;
+    }
+
     void Update ()
     {
+        if (!GameManager.instance.playersTurn)
+            return;
+
         command = inputHandler.HandleInput();
 
-        command.Execute(this);
+        if (command != null)
+            command.Execute(this);
     }
 }

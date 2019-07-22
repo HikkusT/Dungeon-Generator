@@ -13,6 +13,7 @@ public class LevelGenerator : MonoBehaviour {
     public int minLenght = 4;
     public int maxLenght = 12;
     public int maxIterations = 10;
+    public int chanceOfCorridor = 35;
     public GameObject[] floorTiles;
     public GameObject[] wallTiles;
     public GameObject[] doorTiles;
@@ -22,6 +23,8 @@ public class LevelGenerator : MonoBehaviour {
     private int[][] doors;
     private Room rooms;
     private GameObject boardHolder;
+
+    private int numDoors;
 
     //Ajeitar isso por favoooor
     public GameObject player;
@@ -34,7 +37,9 @@ public class LevelGenerator : MonoBehaviour {
 
         GenerateFirstRoom();
 
-        StartCoroutine("GenerateOtherRooms");
+        //StartCoroutine("GenerateOtherRooms");
+
+        GenerateOtherRooms();
 
     }
 
@@ -53,7 +58,7 @@ public class LevelGenerator : MonoBehaviour {
 
         //Gerando
         rooms = new Room ();
-        rooms.SetupRoom(columns, rows, smoothness, wallQuant, minLenght, maxLenght, roomType);
+        rooms.SetupRoom(columns, rows, smoothness, wallQuant, minLenght, maxLenght, roomType, 0);
         secTiles = rooms.tiles;
 
         //O deslocamento do grid secundário será de metade das (colunas/fileiras - lowestX/lowestY) para centralizar, menos um ajuste de coluna/20 para considerar a largura da sala
@@ -70,7 +75,7 @@ public class LevelGenerator : MonoBehaviour {
     }
     
     //Função ficou bem mal escrita. Reescrever
-    IEnumerator GenerateOtherRooms()
+    void GenerateOtherRooms()
     {
         //Ver quantos tipos de sala tem
         int numRoomTypes = System.Enum.GetNames(typeof(RoomType)).Length;
@@ -89,7 +94,7 @@ public class LevelGenerator : MonoBehaviour {
             roomType = (RoomType)intRoomType.Random;
 
             rooms = new Room();
-            rooms.SetupRoom(columns, rows, smoothness, wallQuant, minLenght, maxLenght, roomType);
+            rooms.SetupRoom(columns, rows, smoothness, wallQuant, minLenght, maxLenght, roomType, chanceOfCorridor);
             secTiles = rooms.tiles;
 
             for (int i = 2; i < columns - (rooms.highestX - rooms.lowestX) - 2 && !foundSpace; i++)
@@ -106,7 +111,6 @@ public class LevelGenerator : MonoBehaviour {
                     //yield return new WaitForEndOfFrame();
                     //yield return null;
                 }
-                yield return null;
             }
 
             if (foundSpace)
@@ -134,33 +138,11 @@ public class LevelGenerator : MonoBehaviour {
         if (resposta)
         {
             resposta = false;
-            //Checando por portas
 
-            //West Door
-            if (tiles[x - 1][y + (rooms.westDoor - rooms.lowestY)] == TileType.Wall && tiles[x - 2][y + (rooms.westDoor - rooms.lowestY)] == TileType.Floor)
+            foreach(DoorInfo door in rooms.doors)
             {
-                resposta = true;
-                Debug.Log("Possivel porta Oeste: x = " + x.ToString() + " y = " + y.ToString());
-            }
-
-            //North Door
-            else if (tiles[x + (rooms.northDoor - rooms.lowestX)][y + (rooms.highestY - rooms.lowestY) + 1] == TileType.Wall && tiles[x + (rooms.northDoor - rooms.lowestX)][y + (rooms.highestY - rooms.lowestY) + 2] == TileType.Floor)
-            {
-                resposta = true;
-                Debug.Log("Possivel porta Norte: x = " + x.ToString() + " y = " + y.ToString());
-            }
-
-            //EastDoor
-            else if (tiles[x + (rooms.highestX - rooms.lowestX) + 1][y + (rooms.eastDoor - rooms.lowestY)] == TileType.Wall && tiles[x + (rooms.highestX - rooms.lowestX) + 2][y + (rooms.eastDoor - rooms.lowestY)] == TileType.Floor)
-            {
-                resposta = true;
-                Debug.Log("Possivel porta Leste: x = " + x.ToString() + " y = " + y.ToString());
-            }
-            //South Door
-            else if (tiles[x + (rooms.southDoor - rooms.lowestX)][y - 1] == TileType.Wall && tiles[x + (rooms.southDoor - rooms.lowestX)][y - 2] == TileType.Floor)
-            {
-                resposta = true;
-                Debug.Log("Possivel porta Sul: x = " + x.ToString() + " y = " + y.ToString());
+                if (tiles[x + (door.xPos - rooms.lowestX) + door.xDir][y + (door.yPos - rooms.lowestY) + door.yDir] == TileType.Wall && tiles[x + (door.xPos - rooms.lowestX) + 2 * door.xDir][y + (door.yPos - rooms.lowestY) + 2 * door.yDir] == TileType.Floor)
+                    resposta = true;
             }
         }
 
